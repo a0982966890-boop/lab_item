@@ -14,9 +14,18 @@
   --border:#DDDCD8;--border2:#AEADA8;
   --accent:#2D6A4F;--accent-light:#E8F4EE;--accent-mid:#95D5B2;--accent-dark:#1B4332;
 }
+[data-theme="dark"]{
+  --bg:#0A1628;--surface:#112036;--surface2:#172B45;
+  --text:#C8E6FF;--text2:#6B93B4;--text3:#3A5570;
+  --border:#1E3A5F;--border2:#2A5080;
+  --accent:#38BDF8;--accent-light:#0C2D45;--accent-mid:#1565A0;--accent-dark:#7DD3FC;
+}
 body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
 .header{background:var(--surface);border-bottom:2px solid var(--accent);padding:12px 20px 10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.06)}
-.header-title{font-size:14px;font-weight:700;color:var(--accent-dark);letter-spacing:.04em;margin-bottom:9px}
+.header-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.header-title{font-size:14px;font-weight:700;color:var(--accent-dark);letter-spacing:.04em}
+.theme-btn{height:26px;padding:0 10px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface2);cursor:pointer;font-size:13px;transition:all .15s;color:var(--text2)}
+.theme-btn:hover{border-color:var(--border2);background:var(--surface)}
 .search-row{display:flex;gap:8px;align-items:center}
 .search-wrap{position:relative;flex:1;max-width:560px}
 .search-wrap input{width:100%;height:36px;padding:0 12px 0 32px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
@@ -92,7 +101,7 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
 </head>
 <body>
 <div class="header">
-  <div class="header-title">🔬 檢驗項目查詢系統</div>
+  <div class="header-title-row"><span class="header-title">🔬 檢驗項目查詢系統</span><button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="切換顯示模式">☀️</button></div>
   <div class="search-row">
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
@@ -151,6 +160,12 @@ function renderActiveTags(){
 function toggleTag(t){
   if(activeTags.has(t)) activeTags.delete(t); else activeTags.add(t);
   pg=0;applyFilter();
+}
+function toggleTheme(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',isDark?'light':'dark');
+  document.getElementById('theme-btn').textContent=isDark?'☀️':'🌙';
+  localStorage.setItem('theme',isDark?'light':'dark');
 }
 function score(it,kw){
   if(!kw) return 1;
@@ -256,6 +271,10 @@ function openModal(idx){
 function closeModal(e){if(e.target===document.getElementById('overlay')) closeModalBtn();}
 function closeModalBtn(){document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';}
 document.addEventListener('keydown',e=>{if(e.key==='Escape') closeModalBtn();});
+(function(){
+  const saved=localStorage.getItem('theme');
+  if(saved==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('theme-btn').textContent='🌙';}
+})();
 applyFilter();
 </script>
 </body>
