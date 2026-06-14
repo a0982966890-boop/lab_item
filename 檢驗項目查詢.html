@@ -40,14 +40,20 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
 .header-right{display:flex;gap:5px;align-items:center;flex-wrap:wrap;flex:1;justify-content:flex-end}
 .theme-btn,.reload-btn{height:26px;padding:0 10px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface2);cursor:pointer;font-size:12px;transition:all .15s;color:var(--text2);white-space:nowrap}
 .theme-btn:hover,.reload-btn:hover{border-color:var(--border2);background:var(--surface)}
-/* A–Z bar */
-.alpha-bar{display:flex;flex-wrap:wrap;gap:2px;align-items:center}
-.alpha-btn{height:24px;min-width:22px;padding:0 3px;border:1.5px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text2);font-size:10.5px;font-weight:600;cursor:pointer;font-family:"JetBrains Mono",monospace;transition:all .12s;line-height:1}
+/* A–Z keyboard layout */
+.alpha-wrap{display:flex;align-items:center;gap:6px;margin-left:auto;padding-right:20px}
+.alpha-all{height:26px;padding:0 8px;border:1.5px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:"Noto Sans TC",sans-serif;transition:all .12s;white-space:nowrap;align-self:center}
+.alpha-all:hover{border-color:var(--border2);background:var(--surface2)}
+.alpha-all.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.alpha-vsep{width:1px;height:82px;background:var(--border);flex-shrink:0}
+.alpha-kbd{display:flex;flex-direction:column;gap:2px}
+.alpha-row{display:flex;gap:2px}
+.alpha-row-2{padding-left:8px}
+.alpha-row-3{padding-left:20px}
+.alpha-btn{width:26px;height:26px;border:1.5px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:"JetBrains Mono",monospace;transition:all .12s;padding:0;display:flex;align-items:center;justify-content:center}
 .alpha-btn:hover{border-color:var(--border2);background:var(--surface2)}
 .alpha-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.alpha-btn.zero{opacity:.22;pointer-events:none}
-.alpha-all{min-width:30px;font-family:"Noto Sans TC",sans-serif;font-size:10px}
-.alpha-sep{width:1px;height:14px;background:var(--border);margin:0 2px;flex-shrink:0}
+.alpha-btn.no-data{opacity:.2;pointer-events:none;background:var(--surface2)}
 .search-row{display:flex;gap:8px;align-items:center}
 .search-wrap{position:relative;flex:1;max-width:560px}
 .search-wrap input{width:100%;height:36px;padding:0 12px 0 32px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
@@ -137,7 +143,6 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
   <div class="header-title-row">
     <span class="header-title">🔬 檢驗項目查詢系統</span>
     <div class="header-right">
-      <div class="alpha-bar" id="alpha-bar"></div>
       <button class="reload-btn" onclick="reloadData()" title="重新從 GAS 載入資料">🔄 重新載入</button>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀️</button>
     </div>
@@ -152,6 +157,7 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
       <button class="sort-btn on" id="sb-rel" onclick="setSortBy('rel')">相關度</button>
       <button class="sort-btn" id="sb-name" onclick="setSortBy('name')">名稱</button>
     </div>
+    <div class="alpha-wrap" id="alpha-bar"></div>
   </div>
   <div class="stats-row">
     <div class="stat"><strong id="sc">0</strong>筆符合</div>
@@ -261,10 +267,10 @@ function toggleTheme() {
 
 // ── A–Z 字母列 ──
 function buildAlphaBar() {
-  const bar = document.getElementById('alpha-bar');
-  bar.innerHTML = '';
+  const wrap = document.getElementById('alpha-bar');
+  wrap.innerHTML = '';
 
-  // 計算目前 tag + search 條件下哪些字母有資料（不受 alpha 自身影響）
+  // 計算目前 tag + search 條件下哪些字母有資料
   const base = ALL.filter(r => {
     const tagMatch = activeTags.size === 0 || [...activeTags].every(t => r.tags.includes(t));
     if (!tagMatch) return false;
@@ -275,23 +281,36 @@ function buildAlphaBar() {
 
   // ALL 按鈕
   const allBtn = document.createElement('button');
-  allBtn.className = 'alpha-btn alpha-all' + (activeAlpha === '' ? ' on' : '');
+  allBtn.className = 'alpha-all' + (activeAlpha === '' ? ' on' : '');
   allBtn.textContent = 'ALL';
   allBtn.onclick = () => { activeAlpha = ''; page = 1; render(); };
-  bar.appendChild(allBtn);
+  wrap.appendChild(allBtn);
 
-  const sep = document.createElement('span');
-  sep.className = 'alpha-sep';
-  bar.appendChild(sep);
+  // 垂直分隔線
+  const vsep = document.createElement('span');
+  vsep.className = 'alpha-vsep';
+  wrap.appendChild(vsep);
 
-  // A–Z
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(c => {
-    const btn = document.createElement('button');
-    btn.className = 'alpha-btn' + (activeAlpha === c ? ' on' : '') + (available.has(c) ? '' : ' zero');
-    btn.textContent = c;
-    btn.onclick = () => { activeAlpha = (activeAlpha === c ? '' : c); page = 1; render(); };
-    bar.appendChild(btn);
+  // 鍵盤三排
+  const rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+  const kbd = document.createElement('div');
+  kbd.className = 'alpha-kbd';
+
+  rows.forEach((row, ri) => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'alpha-row' + (ri === 1 ? ' alpha-row-2' : ri === 2 ? ' alpha-row-3' : '');
+    row.split('').forEach(c => {
+      const btn = document.createElement('button');
+      const hasData = available.has(c);
+      btn.className = 'alpha-btn' + (activeAlpha === c ? ' on' : '') + (hasData ? '' : ' no-data');
+      btn.textContent = c;
+      btn.title = hasData ? `篩選 ${c} 開頭` : '無此字母開頭的項目';
+      if (hasData) btn.onclick = () => { activeAlpha = (activeAlpha === c ? '' : c); page = 1; render(); };
+      rowEl.appendChild(btn);
+    });
+    kbd.appendChild(rowEl);
   });
+  wrap.appendChild(kbd);
 }
 
 // ── Tag 列 ──
