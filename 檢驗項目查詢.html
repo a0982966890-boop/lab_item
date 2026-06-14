@@ -54,6 +54,21 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
 .alpha-btn:hover{border-color:var(--border2);background:var(--surface2)}
 .alpha-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .alpha-btn.no-data{opacity:.2;pointer-events:none;background:var(--surface2)}
+/* 手機版 A–Z 浮動面板 */
+.alpha-toggle-btn{display:none;height:26px;padding:0 10px;border:1.5px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .12s;margin-left:auto}
+.alpha-toggle-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.alpha-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:200}
+.alpha-panel.open{display:block}
+.alpha-panel-inner{display:flex;align-items:center;gap:6px}
+@media(max-width:600px){
+  .alpha-wrap{display:none}
+  .alpha-toggle-btn{display:flex;align-items:center}
+  .header{position:relative}
+}
+@media(min-width:601px) and (orientation:landscape){
+  .alpha-wrap{display:flex}
+  .alpha-toggle-btn{display:none}
+}
 .search-row{display:flex;gap:8px;align-items:center}
 .search-wrap{position:relative;flex:1;max-width:560px}
 .search-wrap input{width:100%;height:36px;padding:0 12px 0 32px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
@@ -158,6 +173,10 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
       <button class="sort-btn" id="sb-name" onclick="setSortBy('name')">名稱</button>
     </div>
     <div class="alpha-wrap" id="alpha-bar"></div>
+    <button class="alpha-toggle-btn" id="alpha-toggle" onclick="toggleAlphaPanel()">🔤 A–Z</button>
+    <div class="alpha-panel" id="alpha-panel">
+      <div class="alpha-panel-inner" id="alpha-bar-mobile"></div>
+    </div>
   </div>
   <div class="stats-row">
     <div class="stat"><strong id="sc">0</strong>筆符合</div>
@@ -267,23 +286,33 @@ function toggleTheme() {
 
 // ── A–Z 字母列 ──
 function buildAlphaBar() {
-  const wrap = document.getElementById('alpha-bar');
-  wrap.innerHTML = '';
+  const available = getAvailableAlpha();
+  buildAlphaInto(document.getElementById('alpha-bar'), available, false);
+  buildAlphaInto(document.getElementById('alpha-bar-mobile'), available, true);
+  // 更新 toggle 按鈕狀態
+  const tb = document.getElementById('alpha-toggle');
+  if (tb) tb.classList.toggle('on', activeAlpha !== '');
+}
 
-  // 計算目前 tag + search 條件下哪些字母有資料
+function getAvailableAlpha() {
   const base = ALL.filter(r => {
     const tagMatch = activeTags.size === 0 || [...activeTags].every(t => r.tags.includes(t));
     if (!tagMatch) return false;
     const q = searchQ.toLowerCase();
     return !q || (r.n + r.cn + r.c + r.ins + r.sp + r.ct + r.method + r.g).toLowerCase().includes(q);
   });
-  const available = new Set(base.map(r => (r.n || '').charAt(0).toUpperCase()).filter(c => /[A-Z]/.test(c)));
+  return new Set(base.map(r => (r.n || '').charAt(0).toUpperCase()).filter(c => /[A-Z]/.test(c)));
+}
+
+function buildAlphaInto(wrap, available, isMobile) {
+  if (!wrap) return;
+  wrap.innerHTML = '';
 
   // ALL 按鈕
   const allBtn = document.createElement('button');
   allBtn.className = 'alpha-all' + (activeAlpha === '' ? ' on' : '');
   allBtn.textContent = 'ALL';
-  allBtn.onclick = () => { activeAlpha = ''; page = 1; render(); };
+  allBtn.onclick = () => { activeAlpha = ''; page = 1; if(isMobile) closeAlphaPanel(); render(); };
   wrap.appendChild(allBtn);
 
   // 垂直分隔線
@@ -295,7 +324,6 @@ function buildAlphaBar() {
   const rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
   const kbd = document.createElement('div');
   kbd.className = 'alpha-kbd';
-
   rows.forEach((row, ri) => {
     const rowEl = document.createElement('div');
     rowEl.className = 'alpha-row' + (ri === 1 ? ' alpha-row-2' : ri === 2 ? ' alpha-row-3' : '');
@@ -305,13 +333,28 @@ function buildAlphaBar() {
       btn.className = 'alpha-btn' + (activeAlpha === c ? ' on' : '') + (hasData ? '' : ' no-data');
       btn.textContent = c;
       btn.title = hasData ? `篩選 ${c} 開頭` : '無此字母開頭的項目';
-      if (hasData) btn.onclick = () => { activeAlpha = (activeAlpha === c ? '' : c); page = 1; render(); };
+      if (hasData) btn.onclick = () => { activeAlpha = (activeAlpha === c ? '' : c); page = 1; if(isMobile) closeAlphaPanel(); render(); };
       rowEl.appendChild(btn);
     });
     kbd.appendChild(rowEl);
   });
   wrap.appendChild(kbd);
 }
+
+function toggleAlphaPanel() {
+  document.getElementById('alpha-panel').classList.toggle('open');
+}
+function closeAlphaPanel() {
+  document.getElementById('alpha-panel').classList.remove('open');
+}
+// 點面板外關閉
+document.addEventListener('click', e => {
+  const panel = document.getElementById('alpha-panel');
+  const toggle = document.getElementById('alpha-toggle');
+  if (panel && !panel.contains(e.target) && toggle && !toggle.contains(e.target)) {
+    closeAlphaPanel();
+  }
+});
 
 // ── Tag 列 ──
 function buildTagBar() {
