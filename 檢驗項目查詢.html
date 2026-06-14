@@ -111,6 +111,12 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
 .section-title::before{content:"";width:3px;height:11px;background:var(--accent);border-radius:2px;display:inline-block}
 .section-content{font-size:12.5px;color:var(--text);line-height:1.8;white-space:pre-wrap;word-break:break-word}
 .err-box{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;font-size:12px;color:#7a5800;grid-column:1/-1}
+.alpha-bar{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+.alpha-btn{height:24px;min-width:24px;padding:0 4px;border:1.5px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:"JetBrains Mono",monospace;transition:all .12s;line-height:1}
+.alpha-btn:hover{border-color:var(--border2);background:var(--surface2)}
+.alpha-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.alpha-btn.zero{opacity:.25;pointer-events:none}
+.alpha-sep{width:1px;height:16px;background:var(--border);margin:0 2px}
 @media(max-width:600px){.meta-grid{grid-template-columns:1fr}.meta-grid-3{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr}}
 </style>
 </head>
@@ -135,6 +141,7 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
   <div class="header-title-row">
     <span class="header-title">🔬 檢驗項目查詢系統</span>
     <div class="header-right">
+      <div class="alpha-bar" id="alpha-bar"></div>
       <button class="reload-btn" onclick="reloadData()" title="重新從 GAS 載入資料">🔄 重新載入</button>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀️</button>
     </div>
@@ -197,7 +204,7 @@ const TAG_EMOJI = {
 //  狀態
 // ══════════════════════════════════════════════
 let ALL = [], filtered = [], page = 1;
-let activeTags = new Set(), sortBy = 'rel', searchQ = '';
+let activeTags = new Set(), sortBy = 'rel', searchQ = '', activeAlpha = '';
 
 // ══════════════════════════════════════════════
 //  初始化
@@ -225,27 +232,52 @@ function reloadData() {
   loadFromGAS(GAS_URL);
 }
 
-async function loadFromGAS(url) {
+function loadFromGAS(url) {
   document.getElementById('loading').classList.remove('hide');
-  try {
-    // GAS doGet 需要加 ?callback 繞過 CORS，或直接 fetch（需要 GAS 允許匿名）
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    ALL = await res.json();
+
+  // 用 JSONP 繞過 CORS（GAS 支援 ?callback=xxx）
+  const cbName = '_gasCallback_' + Date.now();
+  const script = document.createElement('script');
+
+  const timer = setTimeout(() => {
+    cleanup();
+    showError('載入逾時，請確認 GAS 網址正確且已部署');
+  }, 15000);
+
+  window[cbName] = function(data) {
+    cleanup();
+    ALL = data;
     document.getElementById('total-count').textContent = ALL.length;
     page = 1; activeTags.clear(); searchQ = '';
     document.getElementById('q').value = '';
     render();
-  } catch (err) {
+    document.getElementById('loading').classList.add('hide');
+  };
+
+  script.onerror = function() {
+    cleanup();
+    showError('無法載入腳本，請確認 GAS 網址正確且存取權設為「所有人」');
+  };
+
+  function cleanup() {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  }
+
+  function showError(msg) {
+    document.getElementById('loading').classList.add('hide');
     document.getElementById('cards').innerHTML =
-      `<div class="err-box">❌ 無法載入資料：${err.message}<br><br>
+      `<div class="err-box">❌ 無法載入資料：${msg}<br><br>
       請確認：<br>
       1. GAS 已部署為「網路應用程式」<br>
-      2. 存取權設為「所有人」（不需登入）<br>
-      3. 網址正確（結尾為 /exec）</div>`;
-  } finally {
-    document.getElementById('loading').classList.add('hide');
+      2. 存取權設為「所有人（包含匿名使用者）」<br>
+      3. 網址正確（結尾為 /exec）<br>
+      4. 已使用最新版的 Code.gs（支援 JSONP）</div>`;
   }
+
+  script.src = `${url}?callback=${cbName}`;
+  document.head.appendChild(script);
 }
 
 function hideBanner() { document.getElementById('gas-banner').classList.add('hide'); }
@@ -302,8 +334,43 @@ function getBaseFiltered() {
   return ALL.filter(r => {
     const tagMatch = activeTags.size === 0 || [...activeTags].every(t => r.tags.includes(t));
     if (!tagMatch) return false;
+    if (activeAlpha && !(r.n || '').toUpperCase().startsWith(activeAlpha)) return false;
     if (!q) return true;
     return (r.n + r.cn + r.c + r.ins + r.sp + r.ct + r.method + r.g).toLowerCase().includes(q);
+  });
+}
+
+function buildAlphaBar() {
+  const bar = document.getElementById('alpha-bar');
+  bar.innerHTML = '';
+  // 計算哪些字母有資料（不受 alpha 篩選自身影響，但受 tag/search 影響）
+  const base = ALL.filter(r => {
+    const tagMatch = activeTags.size === 0 || [...activeTags].every(t => r.tags.includes(t));
+    if (!tagMatch) return false;
+    const q = searchQ.toLowerCase();
+    if (!q) return true;
+    return (r.n + r.cn + r.c + r.ins + r.sp + r.ct + r.method + r.g).toLowerCase().includes(q);
+  });
+  const available = new Set(base.map(r => (r.n || '').charAt(0).toUpperCase()).filter(c => /[A-Z]/.test(c)));
+
+  // 全部按鈕
+  const allBtn = document.createElement('button');
+  allBtn.className = 'alpha-btn' + (activeAlpha === '' ? ' on' : '');
+  allBtn.textContent = 'ALL';
+  allBtn.style.minWidth = '32px';
+  allBtn.onclick = () => { activeAlpha = ''; page = 1; render(); };
+  bar.appendChild(allBtn);
+
+  const sep = document.createElement('span');
+  sep.className = 'alpha-sep';
+  bar.appendChild(sep);
+
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'alpha-btn' + (activeAlpha === c ? ' on' : '') + (available.has(c) ? '' : ' zero');
+    btn.textContent = c;
+    btn.onclick = () => { activeAlpha = activeAlpha === c ? '' : c; page = 1; render(); };
+    bar.appendChild(btn);
   });
 }
 
@@ -314,7 +381,7 @@ function toggleTag(t) {
 function onSearch() { searchQ = document.getElementById('q').value; page = 1; render(); }
 function clearAll() {
   activeTags.clear();
-  document.getElementById('q').value = ''; searchQ = ''; sortBy = 'rel';
+  document.getElementById('q').value = ''; searchQ = ''; sortBy = 'rel'; activeAlpha = '';
   document.getElementById('sb-rel').classList.add('on');
   document.getElementById('sb-name').classList.remove('on');
   page = 1; render();
@@ -335,6 +402,7 @@ function render() {
   document.getElementById('sc').textContent = filtered.length;
   renderActiveTags();
   buildTagBar();
+  buildAlphaBar();
   renderCards();
   renderPagination();
 }
