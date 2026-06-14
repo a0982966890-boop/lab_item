@@ -21,13 +21,11 @@
   --accent:#38BDF8;--accent-light:#0C2D45;--accent-mid:#1565A0;--accent-dark:#7DD3FC;
 }
 body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
-/* ── Loading overlay ── */
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
 #loading.hide{display:none}
 .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{font-size:13px;color:var(--text3)}
-/* ── GAS URL banner ── */
 #gas-banner{background:#fff8e1;border-bottom:1px solid #ffe082;padding:8px 20px;font-size:12px;color:#7a5800;display:flex;align-items:center;gap:8px}
 #gas-banner.hide{display:none}
 #gas-url-input{flex:1;max-width:560px;height:28px;padding:0 8px;border:1px solid #ffe082;border-radius:5px;font-size:12px;font-family:inherit;background:#fff;color:#333}
@@ -36,13 +34,20 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
 .gas-btn:hover{background:#ffa000}
 .gas-btn.sec{background:transparent;color:#7a5800;border-color:#ffe082}
 .gas-btn.sec:hover{background:#fff8e1}
-/* ── Header ── */
 .header{background:var(--surface);border-bottom:2px solid var(--accent);padding:12px 20px 10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.06)}
-.header-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
-.header-title{font-size:14px;font-weight:700;color:var(--accent-dark);letter-spacing:.04em}
-.header-right{display:flex;gap:6px;align-items:center}
-.theme-btn,.reload-btn{height:26px;padding:0 10px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface2);cursor:pointer;font-size:12px;transition:all .15s;color:var(--text2)}
+.header-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;gap:12px}
+.header-title{font-size:14px;font-weight:700;color:var(--accent-dark);letter-spacing:.04em;white-space:nowrap}
+.header-right{display:flex;gap:5px;align-items:center;flex-wrap:wrap;flex:1;justify-content:flex-end}
+.theme-btn,.reload-btn{height:26px;padding:0 10px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface2);cursor:pointer;font-size:12px;transition:all .15s;color:var(--text2);white-space:nowrap}
 .theme-btn:hover,.reload-btn:hover{border-color:var(--border2);background:var(--surface)}
+/* A–Z bar */
+.alpha-bar{display:flex;flex-wrap:wrap;gap:2px;align-items:center}
+.alpha-btn{height:24px;min-width:22px;padding:0 3px;border:1.5px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text2);font-size:10.5px;font-weight:600;cursor:pointer;font-family:"JetBrains Mono",monospace;transition:all .12s;line-height:1}
+.alpha-btn:hover{border-color:var(--border2);background:var(--surface2)}
+.alpha-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.alpha-btn.zero{opacity:.22;pointer-events:none}
+.alpha-all{min-width:30px;font-family:"Noto Sans TC",sans-serif;font-size:10px}
+.alpha-sep{width:1px;height:14px;background:var(--border);margin:0 2px;flex-shrink:0}
 .search-row{display:flex;gap:8px;align-items:center}
 .search-wrap{position:relative;flex:1;max-width:560px}
 .search-wrap input{width:100%;height:36px;padding:0 12px 0 32px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
@@ -111,24 +116,16 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
 .section-title::before{content:"";width:3px;height:11px;background:var(--accent);border-radius:2px;display:inline-block}
 .section-content{font-size:12.5px;color:var(--text);line-height:1.8;white-space:pre-wrap;word-break:break-word}
 .err-box{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;font-size:12px;color:#7a5800;grid-column:1/-1}
-.alpha-bar{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
-.alpha-btn{height:24px;min-width:24px;padding:0 4px;border:1.5px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:"JetBrains Mono",monospace;transition:all .12s;line-height:1}
-.alpha-btn:hover{border-color:var(--border2);background:var(--surface2)}
-.alpha-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.alpha-btn.zero{opacity:.25;pointer-events:none}
-.alpha-sep{width:1px;height:16px;background:var(--border);margin:0 2px}
 @media(max-width:600px){.meta-grid{grid-template-columns:1fr}.meta-grid-3{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- 載入中畫面 -->
 <div id="loading">
   <div class="spinner"></div>
   <div class="loading-text">載入資料中…</div>
 </div>
 
-<!-- GAS 網址設定列 -->
 <div id="gas-banner">
   <span>⚙️ GAS 網址：</span>
   <input id="gas-url-input" type="text" placeholder="貼上你的 Web App 網址，例如 https://script.google.com/macros/s/…/exec">
@@ -136,7 +133,6 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
   <button class="gas-btn sec" onclick="hideBanner()">▲ 收起</button>
 </div>
 
-<!-- 主介面 -->
 <div class="header">
   <div class="header-title-row">
     <span class="header-title">🔬 檢驗項目查詢系統</span>
@@ -181,10 +177,8 @@ body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text
 </div>
 
 <script>
-// ══════════════════════════════════════════════
-//  設定
-// ══════════════════════════════════════════════
-const GAS_URL_KEY = 'lab_gas_url';  // localStorage key
+const GAS_URL_KEY = 'lab_gas_url';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwyAHVr5YxxBT5_kXNHtR6CdGHDxO0_RrynQ4PkqjX7gWByOP1ncytsSHPZjjvTamKM/exec';
 
 const TAG_ORDER = [
   '生化','電解質','免疫','分子生物','基因','血液學','凝血','血庫','鏡檢','微生物','微量元素/重金屬',
@@ -200,26 +194,17 @@ const TAG_EMOJI = {
   '貧血':'🌡️','糖尿病':'🍬','移植':'🔗','發炎':'🔥','營養':'🥗','尿液':'💧','糞便':'🟫'
 };
 
-// ══════════════════════════════════════════════
-//  狀態
-// ══════════════════════════════════════════════
 let ALL = [], filtered = [], page = 1;
 let activeTags = new Set(), sortBy = 'rel', searchQ = '', activeAlpha = '';
 
-// ══════════════════════════════════════════════
-//  初始化
-// ══════════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwyAHVr5YxxBT5_kXNHtR6CdGHDxO0_RrynQ4PkqjX7gWByOP1ncytsSHPZjjvTamKM/exec';
-
+// ── 初始化 ──
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('gas-url-input').value = GAS_URL;
   hideBanner();
   loadFromGAS(GAS_URL);
 });
 
-// ══════════════════════════════════════════════
-//  GAS 資料載入
-// ══════════════════════════════════════════════
+// ── GAS 載入（JSONP）──
 function saveAndLoad() {
   const url = document.getElementById('gas-url-input').value.trim();
   if (!url) { alert('請先貼上 GAS Web App 網址'); return; }
@@ -227,55 +212,38 @@ function saveAndLoad() {
   hideBanner();
   loadFromGAS(url);
 }
-
-function reloadData() {
-  loadFromGAS(GAS_URL);
-}
+function reloadData() { loadFromGAS(GAS_URL); }
 
 function loadFromGAS(url) {
   document.getElementById('loading').classList.remove('hide');
-
-  // 用 JSONP 繞過 CORS（GAS 支援 ?callback=xxx）
   const cbName = '_gasCallback_' + Date.now();
   const script = document.createElement('script');
-
-  const timer = setTimeout(() => {
-    cleanup();
-    showError('載入逾時，請確認 GAS 網址正確且已部署');
-  }, 15000);
+  const timer = setTimeout(() => { cleanup(); showError('載入逾時，請確認 GAS 網址正確且已部署'); }, 15000);
 
   window[cbName] = function(data) {
     cleanup();
     ALL = data;
     document.getElementById('total-count').textContent = ALL.length;
-    page = 1; activeTags.clear(); searchQ = '';
+    page = 1; activeTags.clear(); searchQ = ''; activeAlpha = '';
     document.getElementById('q').value = '';
     render();
     document.getElementById('loading').classList.add('hide');
   };
-
-  script.onerror = function() {
-    cleanup();
-    showError('無法載入腳本，請確認 GAS 網址正確且存取權設為「所有人」');
-  };
+  script.onerror = function() { cleanup(); showError('無法載入，請確認 GAS 網址正確且存取權設為「所有人」'); };
 
   function cleanup() {
-    clearTimeout(timer);
-    delete window[cbName];
+    clearTimeout(timer); delete window[cbName];
     if (script.parentNode) script.parentNode.removeChild(script);
   }
-
   function showError(msg) {
     document.getElementById('loading').classList.add('hide');
     document.getElementById('cards').innerHTML =
-      `<div class="err-box">❌ 無法載入資料：${msg}<br><br>
-      請確認：<br>
+      `<div class="err-box">❌ 無法載入資料：${msg}<br><br>請確認：<br>
       1. GAS 已部署為「網路應用程式」<br>
       2. 存取權設為「所有人（包含匿名使用者）」<br>
       3. 網址正確（結尾為 /exec）<br>
-      4. 已使用最新版的 Code.gs（支援 JSONP）</div>`;
+      4. Code.gs 已更新為支援 JSONP 的版本</div>`;
   }
-
   script.src = `${url}?callback=${cbName}`;
   document.head.appendChild(script);
 }
@@ -283,9 +251,7 @@ function loadFromGAS(url) {
 function hideBanner() { document.getElementById('gas-banner').classList.add('hide'); }
 function showBanner() { document.getElementById('gas-banner').classList.remove('hide'); }
 
-// ══════════════════════════════════════════════
-//  主題切換
-// ══════════════════════════════════════════════
+// ── 主題 ──
 function toggleTheme() {
   const d = document.documentElement;
   const isDark = d.getAttribute('data-theme') === 'dark';
@@ -293,9 +259,42 @@ function toggleTheme() {
   document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
 }
 
-// ══════════════════════════════════════════════
-//  標籤列
-// ══════════════════════════════════════════════
+// ── A–Z 字母列 ──
+function buildAlphaBar() {
+  const bar = document.getElementById('alpha-bar');
+  bar.innerHTML = '';
+
+  // 計算目前 tag + search 條件下哪些字母有資料（不受 alpha 自身影響）
+  const base = ALL.filter(r => {
+    const tagMatch = activeTags.size === 0 || [...activeTags].every(t => r.tags.includes(t));
+    if (!tagMatch) return false;
+    const q = searchQ.toLowerCase();
+    return !q || (r.n + r.cn + r.c + r.ins + r.sp + r.ct + r.method + r.g).toLowerCase().includes(q);
+  });
+  const available = new Set(base.map(r => (r.n || '').charAt(0).toUpperCase()).filter(c => /[A-Z]/.test(c)));
+
+  // ALL 按鈕
+  const allBtn = document.createElement('button');
+  allBtn.className = 'alpha-btn alpha-all' + (activeAlpha === '' ? ' on' : '');
+  allBtn.textContent = 'ALL';
+  allBtn.onclick = () => { activeAlpha = ''; page = 1; render(); };
+  bar.appendChild(allBtn);
+
+  const sep = document.createElement('span');
+  sep.className = 'alpha-sep';
+  bar.appendChild(sep);
+
+  // A–Z
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'alpha-btn' + (activeAlpha === c ? ' on' : '') + (available.has(c) ? '' : ' zero');
+    btn.textContent = c;
+    btn.onclick = () => { activeAlpha = (activeAlpha === c ? '' : c); page = 1; render(); };
+    bar.appendChild(btn);
+  });
+}
+
+// ── Tag 列 ──
 function buildTagBar() {
   const bar = document.getElementById('tagbar');
   bar.innerHTML = '';
@@ -318,7 +317,6 @@ function getTotalCounts() {
   ALL.forEach(r => r.tags.forEach(t => { if (c[t] !== undefined) c[t]++; }));
   return c;
 }
-
 function getDynCounts() {
   const base = getBaseFiltered();
   const c = {}; TAG_ORDER.forEach(t => c[t] = 0);
@@ -326,9 +324,7 @@ function getDynCounts() {
   return c;
 }
 
-// ══════════════════════════════════════════════
-//  篩選 & 排序
-// ══════════════════════════════════════════════
+// ── 篩選 ──
 function getBaseFiltered() {
   const q = searchQ.toLowerCase();
   return ALL.filter(r => {
@@ -340,48 +336,11 @@ function getBaseFiltered() {
   });
 }
 
-function buildAlphaBar() {
-  const bar = document.getElementById('alpha-bar');
-  bar.innerHTML = '';
-  // 計算哪些字母有資料（不受 alpha 篩選自身影響，但受 tag/search 影響）
-  const base = ALL.filter(r => {
-    const tagMatch = activeTags.size === 0 || [...activeTags].every(t => r.tags.includes(t));
-    if (!tagMatch) return false;
-    const q = searchQ.toLowerCase();
-    if (!q) return true;
-    return (r.n + r.cn + r.c + r.ins + r.sp + r.ct + r.method + r.g).toLowerCase().includes(q);
-  });
-  const available = new Set(base.map(r => (r.n || '').charAt(0).toUpperCase()).filter(c => /[A-Z]/.test(c)));
-
-  // 全部按鈕
-  const allBtn = document.createElement('button');
-  allBtn.className = 'alpha-btn' + (activeAlpha === '' ? ' on' : '');
-  allBtn.textContent = 'ALL';
-  allBtn.style.minWidth = '32px';
-  allBtn.onclick = () => { activeAlpha = ''; page = 1; render(); };
-  bar.appendChild(allBtn);
-
-  const sep = document.createElement('span');
-  sep.className = 'alpha-sep';
-  bar.appendChild(sep);
-
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(c => {
-    const btn = document.createElement('button');
-    btn.className = 'alpha-btn' + (activeAlpha === c ? ' on' : '') + (available.has(c) ? '' : ' zero');
-    btn.textContent = c;
-    btn.onclick = () => { activeAlpha = activeAlpha === c ? '' : c; page = 1; render(); };
-    bar.appendChild(btn);
-  });
-}
-
-function toggleTag(t) {
-  activeTags.has(t) ? activeTags.delete(t) : activeTags.add(t);
-  page = 1; render();
-}
+function toggleTag(t) { activeTags.has(t) ? activeTags.delete(t) : activeTags.add(t); page = 1; render(); }
 function onSearch() { searchQ = document.getElementById('q').value; page = 1; render(); }
 function clearAll() {
-  activeTags.clear();
-  document.getElementById('q').value = ''; searchQ = ''; sortBy = 'rel'; activeAlpha = '';
+  activeTags.clear(); activeAlpha = '';
+  document.getElementById('q').value = ''; searchQ = ''; sortBy = 'rel';
   document.getElementById('sb-rel').classList.add('on');
   document.getElementById('sb-name').classList.remove('on');
   page = 1; render();
@@ -393,9 +352,7 @@ function setSortBy(s) {
   page = 1; render();
 }
 
-// ══════════════════════════════════════════════
-//  渲染
-// ══════════════════════════════════════════════
+// ── 渲染 ──
 function render() {
   filtered = getBaseFiltered();
   if (sortBy === 'name') filtered.sort((a, b) => a.n.localeCompare(b.n, 'zh'));
@@ -459,9 +416,7 @@ function renderPagination() {
 }
 function goPage(p) { page = p; renderCards(); renderPagination(); window.scrollTo(0, 0); }
 
-// ══════════════════════════════════════════════
-//  Modal
-// ══════════════════════════════════════════════
+// ── Modal ──
 function openModal(idx) {
   const r = ALL[idx];
   document.getElementById('m-name').textContent = r.n || '(未命名)';
